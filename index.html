@@ -11,6 +11,11 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: #ffffff;
@@ -188,9 +193,8 @@
         input[type="number"]:focus,
         input[type="text"]:focus {
             outline: none;
-            ring: 2px;
-            ring-color: #1e40af;
             border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
         }
 
         input[type="number"]:disabled {
@@ -411,7 +415,7 @@
         }
 
         .font-mono {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Courier New', monospace;
             font-size: 1.125rem;
         }
 
@@ -476,6 +480,55 @@
             margin-bottom: 1.5rem;
         }
 
+        /* Quiz Options */
+        .quiz-option {
+            width: 100%;
+            padding: 1rem;
+            text-align: left;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e5e5;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .quiz-option:hover {
+            border-color: #1e40af;
+        }
+
+        .quiz-option.selected {
+            border-color: #1e40af;
+            background-color: #eff6ff;
+        }
+
+        .quiz-radio {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quiz-option.selected .quiz-radio {
+            border-color: #1e40af;
+            background-color: #1e40af;
+        }
+
+        .quiz-radio-inner {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: white;
+            border-radius: 50%;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .tabs-list {
@@ -493,11 +546,15 @@
             .container {
                 padding: 0 0.5rem;
             }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
         }
 
         /* Utility */
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .flex {
@@ -519,6 +576,20 @@
         .items-center {
             align-items: center;
         }
+
+        .grid-input {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .arrow-separator {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body>
@@ -539,9 +610,9 @@
         <!-- Tabs -->
         <div class="tabs-container">
             <div class="tabs-list">
-                <button class="tab-trigger active" onclick="switchTab('conceito')">Conceito</button>
-                <button class="tab-trigger" onclick="switchTab('calculadora')">Calculadora</button>
-                <button class="tab-trigger" onclick="switchTab('exercicios')">Exercícios</button>
+                <button class="tab-trigger active" onclick="switchTab(event, 'conceito')">Conceito</button>
+                <button class="tab-trigger" onclick="switchTab(event, 'calculadora')">Calculadora</button>
+                <button class="tab-trigger" onclick="switchTab(event, 'exercicios')">Exercícios</button>
             </div>
 
             <!-- Conceito Tab -->
@@ -562,7 +633,7 @@
                         </div>
 
                         <div>
-                            <h4 class="font-bold text-xl mb-4">Tipos de Regra de Três:</h4>
+                            <h4 class="font-bold text-lg mb-4">Tipos de Regra de Três:</h4>
                             <div class="space-y-4">
                                 <div class="concept-box" style="border-left-color: #059669; background-color: #ecfdf5;">
                                     <h5 class="font-bold" style="color: #065f46; margin-bottom: 0.5rem;">Simples Direta</h5>
@@ -587,8 +658,8 @@
                         </div>
 
                         <div>
-                            <h4 class="font-bold text-xl mb-4">Passo a Passo:</h4>
-                            <ol class="space-y-3" style="list-style: decimal; margin-left: 1.5rem;">
+                            <h4 class="font-bold text-lg mb-4">Passo a Passo:</h4>
+                            <ol style="list-style: decimal; margin-left: 1.5rem; color: #1a1a1a;">
                                 <li>Identifique as duas grandezas envolvidas</li>
                                 <li>Verifique se são diretamente ou inversamente proporcionais</li>
                                 <li>Monte a proporção com os valores conhecidos</li>
@@ -609,24 +680,24 @@
                     </div>
                     <div class="card-content space-y-8">
                         <div class="concept-box concept-blue">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                            <div class="grid-input">
                                 <div class="form-group">
                                     <label for="a">Valor A</label>
                                     <input type="number" id="a" placeholder="Ex: 5" step="0.01">
                                 </div>
-                                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; color: #9ca3af; align-self: flex-end;">→</div>
+                                <div class="arrow-separator">→</div>
                                 <div class="form-group">
                                     <label for="b">Valor B</label>
                                     <input type="number" id="b" placeholder="Ex: 20" step="0.01">
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem;">
+                            <div class="grid-input" style="margin-top: 1.5rem;">
                                 <div class="form-group">
                                     <label for="c">Valor C</label>
                                     <input type="number" id="c" placeholder="Ex: 10" step="0.01">
                                 </div>
-                                <div style="text-align: center; font-size: 1.5rem; font-weight: bold; color: #9ca3af; align-self: flex-end;">→</div>
+                                <div class="arrow-separator">→</div>
                                 <div class="form-group">
                                     <label for="x">Valor X (resultado)</label>
                                     <input type="number" id="x" placeholder="?" disabled>
@@ -951,16 +1022,20 @@
 
         // State
         let currentMode = null;
-        let diretaIndex = 0, diretaScore = 0, diretaTotalAnswered = 0;
-        let inversaIndex = 0, inversaScore = 0, inversaTotalAnswered = 0;
-        let quizIndex = 0, quizScore = 0, quizTotalAnswered = 0;
-        let diretaAnswered = false, inversaAnswered = false, quizAnswered = false;
+        let diretaIndex = 0, diretaScore = 0, diretaTotalAnswered = 0, diretaAnswered = false;
+        let inversaIndex = 0, inversaScore = 0, inversaTotalAnswered = 0, inversaAnswered = false;
+        let quizIndex = 0, quizScore = 0, quizTotalAnswered = 0, quizAnswered = false;
         let selectedQuizOption = null;
 
         // Tab switching
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-trigger').forEach(btn => btn.classList.remove('active'));
+        function switchTab(event, tabName) {
+            event.preventDefault();
+            document.querySelectorAll('.tab-content').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-trigger').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
         }
@@ -994,7 +1069,7 @@
 
             document.getElementById('x').value = roundedResult;
             document.getElementById('resultValue').textContent = roundedResult;
-            document.getElementById('resultFormula').textContent = `Fórmula: (${c} × ${b}) / ${a} = ${roundedResult}`;
+            document.getElementById('resultFormula').textContent = 'Fórmula: (' + c + ' × ' + b + ') / ' + a + ' = ' + roundedResult;
             resultDiv.classList.remove('hidden');
         }
 
@@ -1060,7 +1135,7 @@
                 diretaScore++;
                 showDiretaFeedback(true, exercisesDireta[diretaIndex].explanation);
             } else {
-                showDiretaFeedback(false, `A resposta correta é ${exercisesDireta[diretaIndex].correctAnswer}. ${exercisesDireta[diretaIndex].explanation}`);
+                showDiretaFeedback(false, 'A resposta correta é ' + exercisesDireta[diretaIndex].correctAnswer + '. ' + exercisesDireta[diretaIndex].explanation);
             }
 
             diretaAnswered = true;
@@ -1070,14 +1145,14 @@
 
         function showDiretaFeedback(isCorrect, message) {
             const div = document.getElementById('diretaFeedback');
-            div.className = `alert ${isCorrect ? 'alert-success' : 'alert-error'}`;
-            div.innerHTML = `<span>${isCorrect ? '✓' : '✗'}</span><div><p>${message}</p></div>`;
+            div.className = 'alert ' + (isCorrect ? 'alert-success' : 'alert-error');
+            div.innerHTML = '<span>' + (isCorrect ? '✓' : '✗') + '</span><div><p>' + message + '</p></div>';
             div.classList.remove('hidden');
         }
 
         function updateDiretaProgress() {
-            document.getElementById('diretaProgress').textContent = `Exercício ${diretaIndex + 1} de ${exercisesDireta.length}`;
-            document.getElementById('diretaScore').textContent = `Acertos: ${diretaScore}/${diretaTotalAnswered}`;
+            document.getElementById('diretaProgress').textContent = 'Exercício ' + (diretaIndex + 1) + ' de ' + exercisesDireta.length;
+            document.getElementById('diretaScore').textContent = 'Acertos: ' + diretaScore + '/' + diretaTotalAnswered;
             const percent = ((diretaIndex + 1) / exercisesDireta.length) * 100;
             document.getElementById('diretaProgressBar').style.width = percent + '%';
         }
@@ -1131,7 +1206,7 @@
                 inversaScore++;
                 showInversaFeedback(true, exercisesInversa[inversaIndex].explanation);
             } else {
-                showInversaFeedback(false, `A resposta correta é ${exercisesInversa[inversaIndex].correctAnswer}. ${exercisesInversa[inversaIndex].explanation}`);
+                showInversaFeedback(false, 'A resposta correta é ' + exercisesInversa[inversaIndex].correctAnswer + '. ' + exercisesInversa[inversaIndex].explanation);
             }
 
             inversaAnswered = true;
@@ -1141,14 +1216,14 @@
 
         function showInversaFeedback(isCorrect, message) {
             const div = document.getElementById('inversaFeedback');
-            div.className = `alert ${isCorrect ? 'alert-success' : 'alert-error'}`;
-            div.innerHTML = `<span>${isCorrect ? '✓' : '✗'}</span><div><p>${message}</p></div>`;
+            div.className = 'alert ' + (isCorrect ? 'alert-success' : 'alert-error');
+            div.innerHTML = '<span>' + (isCorrect ? '✓' : '✗') + '</span><div><p>' + message + '</p></div>';
             div.classList.remove('hidden');
         }
 
         function updateInversaProgress() {
-            document.getElementById('inversaProgress').textContent = `Exercício ${inversaIndex + 1} de ${exercisesInversa.length}`;
-            document.getElementById('inversaScore').textContent = `Acertos: ${inversaScore}/${inversaTotalAnswered}`;
+            document.getElementById('inversaProgress').textContent = 'Exercício ' + (inversaIndex + 1) + ' de ' + exercisesInversa.length;
+            document.getElementById('inversaScore').textContent = 'Acertos: ' + inversaScore + '/' + inversaTotalAnswered;
             const percent = ((inversaIndex + 1) / exercisesInversa.length) * 100;
             document.getElementById('inversaProgressBar').style.width = percent + '%';
         }
@@ -1180,28 +1255,14 @@
             const optionsDiv = document.getElementById('quizOptions');
             optionsDiv.innerHTML = '';
 
-            q.options.forEach((option, index) => {
+            q.options.forEach(function(option, index) {
                 const button = document.createElement('button');
                 button.className = 'quiz-option';
-                button.style.cssText = `
-                    width: 100%;
-                    padding: 1rem;
-                    text-align: left;
-                    border-radius: 0.5rem;
-                    border: 2px solid #e5e5e5;
-                    background-color: white;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    font-size: 1rem;
-                `;
-                button.innerHTML = `
-                    <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 2px solid #d1d5db; flex-shrink: 0;"></div>
-                    <span>${option}</span>
-                `;
-                button.onclick = () => selectQuizOption(index);
+                button.type = 'button';
+                button.innerHTML = '<div class="quiz-radio"><div class="quiz-radio-inner"></div></div><span>' + option + '</span>';
+                button.onclick = function() {
+                    selectQuizOption(index);
+                };
                 optionsDiv.appendChild(button);
             });
 
@@ -1214,20 +1275,11 @@
         function selectQuizOption(index) {
             if (quizAnswered) return;
 
-            document.querySelectorAll('.quiz-option').forEach((btn, i) => {
+            document.querySelectorAll('.quiz-option').forEach(function(btn, i) {
                 if (i === index) {
-                    btn.style.borderColor = '#1e40af';
-                    btn.style.backgroundColor = '#eff6ff';
-                    btn.querySelector('div').style.borderColor = '#1e40af';
-                    btn.querySelector('div').style.backgroundColor = '#1e40af';
-                    const circle = btn.querySelector('div');
-                    circle.innerHTML = '<div style="width: 0.5rem; height: 0.5rem; background-color: white; border-radius: 50%;"></div>';
+                    btn.classList.add('selected');
                 } else {
-                    btn.style.borderColor = '#e5e5e5';
-                    btn.style.backgroundColor = 'white';
-                    btn.querySelector('div').style.borderColor = '#d1d5db';
-                    btn.querySelector('div').style.backgroundColor = 'white';
-                    btn.querySelector('div').innerHTML = '';
+                    btn.classList.remove('selected');
                 }
             });
 
@@ -1255,7 +1307,7 @@
                 showQuizFeedback(true, quizQuestions[quizIndex].explanation);
             } else {
                 const correctOption = quizQuestions[quizIndex].options[quizQuestions[quizIndex].correctAnswer];
-                showQuizFeedback(false, `A resposta correta é: ${correctOption}. ${quizQuestions[quizIndex].explanation}`);
+                showQuizFeedback(false, 'A resposta correta é: ' + correctOption + '. ' + quizQuestions[quizIndex].explanation);
             }
 
             quizAnswered = true;
@@ -1265,14 +1317,14 @@
 
         function showQuizFeedback(isCorrect, message) {
             const div = document.getElementById('quizFeedback');
-            div.className = `alert ${isCorrect ? 'alert-success' : 'alert-error'}`;
-            div.innerHTML = `<span>${isCorrect ? '✓' : '✗'}</span><div><p>${message}</p></div>`;
+            div.className = 'alert ' + (isCorrect ? 'alert-success' : 'alert-error');
+            div.innerHTML = '<span>' + (isCorrect ? '✓' : '✗') + '</span><div><p>' + message + '</p></div>';
             div.classList.remove('hidden');
         }
 
         function updateQuizProgress() {
-            document.getElementById('quizProgress').textContent = `Pergunta ${quizIndex + 1} de ${quizQuestions.length}`;
-            document.getElementById('quizScore').textContent = `Acertos: ${quizScore}/${quizTotalAnswered}`;
+            document.getElementById('quizProgress').textContent = 'Pergunta ' + (quizIndex + 1) + ' de ' + quizQuestions.length;
+            document.getElementById('quizScore').textContent = 'Acertos: ' + quizScore + '/' + quizTotalAnswered;
             const percent = ((quizIndex + 1) / quizQuestions.length) * 100;
             document.getElementById('quizProgressBar').style.width = percent + '%';
         }

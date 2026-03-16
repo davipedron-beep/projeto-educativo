@@ -1,21 +1,978 @@
-MIT License
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
-Copyright (c) 2026 davipedron-beep
+/**
+ * Design Philosophy: Minimalismo Científico Moderno
+ * - Estrutura clara com 3 abas principais
+ * - Calculadora interativa com feedback visual
+ * - Seções dedicadas a Regra de Três Direta e Inversa
+ * - Cores: azul profundo para primária, verde para acertos, âmbar para atenção
+ */
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+export default function RegraTres() {
+  const [, navigate] = useLocation();
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  // Calculadora State
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [c, setC] = useState("");
+  const [x, setX] = useState<number | null>(null);
+  const [calcError, setCalcError] = useState("");
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  // Exercícios State
+  const [exerciseMode, setExerciseMode] = useState<"menu" | "direta" | "inversa" | "quiz">("menu");
+  
+  // Exercícios Direta
+  const [diretaIndex, setDiretaIndex] = useState(0);
+  const [diretaAnswer, setDiretaAnswer] = useState("");
+  const [diretaFeedback, setDiretaFeedback] = useState<{ type: "correct" | "incorrect" | null; message: string }>({
+    type: null,
+    message: "",
+  });
+  const [diretaScore, setDiretaScore] = useState(0);
+  const [diretaTotalAnswered, setDiretaTotalAnswered] = useState(0);
+
+  // Exercícios Inversa
+  const [inversaIndex, setInversaIndex] = useState(0);
+  const [inversaAnswer, setInversaAnswer] = useState("");
+  const [inversaFeedback, setInversaFeedback] = useState<{ type: "correct" | "incorrect" | null; message: string }>({
+    type: null,
+    message: "",
+  });
+  const [inversaScore, setInversaScore] = useState(0);
+  const [inversaTotalAnswered, setInversaTotalAnswered] = useState(0);
+
+  // Questionário
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [quizFeedback, setQuizFeedback] = useState<{ type: "correct" | "incorrect" | null; message: string }>({
+    type: null,
+    message: "",
+  });
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizTotalAnswered, setQuizTotalAnswered] = useState(0);
+
+  const exercisesDireta = [
+    {
+      question: "Se 5 kg de arroz custam R$ 20, quanto custam 8 kg?",
+      setup: "5 kg → R$ 20 | 8 kg → R$ x",
+      correctAnswer: 32,
+      explanation: "Regra de Três Direta: quando aumenta a quantidade, aumenta o preço. 5/20 = 8/x → 5x = 160 → x = 32",
+    },
+    {
+      question: "Um carro percorre 120 km em 2 horas. Quanto tempo levará para percorrer 300 km?",
+      setup: "120 km → 2 h | 300 km → x h",
+      correctAnswer: 5,
+      explanation: "Regra de Três Direta: quando aumenta a distância, aumenta o tempo. 120/2 = 300/x → 120x = 600 → x = 5",
+    },
+    {
+      question: "Se 3 litros de tinta cobrem 12 m², quantos litros são necessários para cobrir 32 m²?",
+      setup: "3 litros → 12 m² | x litros → 32 m²",
+      correctAnswer: 8,
+      explanation: "Regra de Três Direta: quando aumenta a área, aumenta a quantidade de tinta. 3/12 = x/32 → 12x = 96 → x = 8",
+    },
+    {
+      question: "Uma receita usa 2 xícaras de farinha para 3 ovos. Para 9 ovos, quantas xícaras de farinha?",
+      setup: "2 xícaras → 3 ovos | x xícaras → 9 ovos",
+      correctAnswer: 6,
+      explanation: "Regra de Três Direta: quando aumenta o número de ovos, aumenta a farinha. 2/3 = x/9 → 3x = 18 → x = 6",
+    },
+  ];
+
+  const exercisesInversa = [
+    {
+      question: "Se 3 operários constroem uma parede em 12 dias, quantos dias levarão 4 operários?",
+      setup: "3 operários → 12 dias | 4 operários → x dias",
+      correctAnswer: 9,
+      explanation: "Regra de Três Inversa: quando aumenta o número de operários, diminui o tempo. 3 × 12 = 4 × x → 36 = 4x → x = 9",
+    },
+    {
+      question: "Uma torneira enche um tanque em 6 horas. Se usarmos 2 torneiras iguais, em quantas horas o tanque fica cheio?",
+      setup: "1 torneira → 6 horas | 2 torneiras → x horas",
+      correctAnswer: 3,
+      explanation: "Regra de Três Inversa: com mais torneiras, o tempo diminui. 1 × 6 = 2 × x → 6 = 2x → x = 3",
+    },
+    {
+      question: "Um carro viajando a 80 km/h leva 5 horas para chegar ao destino. Se viajar a 100 km/h, quantas horas levará?",
+      setup: "80 km/h → 5 h | 100 km/h → x h",
+      correctAnswer: 4,
+      explanation: "Regra de Três Inversa: quanto maior a velocidade, menor o tempo. 80 × 5 = 100 × x → 400 = 100x → x = 4",
+    },
+    {
+      question: "Se 8 máquinas produzem um lote em 3 dias, em quantos dias 12 máquinas produzem o mesmo lote?",
+      setup: "8 máquinas → 3 dias | 12 máquinas → x dias",
+      correctAnswer: 2,
+      explanation: "Regra de Três Inversa: com mais máquinas, o tempo diminui. 8 × 3 = 12 × x → 24 = 12x → x = 2",
+    },
+  ];
+
+  const quizQuestions = [
+    {
+      question: "Qual é a definição correta de Regra de Três?",
+      options: [
+        "Um método para dividir números em três partes iguais",
+        "Um método matemático para encontrar um valor desconhecido quando temos três valores conhecidos de duas grandezas proporcionais",
+        "Uma operação que envolve sempre multiplicar por 3",
+        "Uma fórmula para calcular áreas de triângulos",
+      ],
+      correctAnswer: 1,
+      explanation: "A regra de três é um método que permite encontrar um valor desconhecido quando temos três valores conhecidos de duas grandezas proporcionais.",
+    },
+    {
+      question: "Se 4 livros custam R$ 80, quanto custam 10 livros?",
+      options: [
+        "R$ 160",
+        "R$ 200",
+        "R$ 240",
+        "R$ 320",
+      ],
+      correctAnswer: 1,
+      explanation: "4/80 = 10/x → 4x = 800 → x = 200. Portanto, 10 livros custam R$ 200.",
+    },
+    {
+      question: "Qual é a fórmula básica da Regra de Três Simples?",
+      options: [
+        "a + b = c + x",
+        "a × b = c × x",
+        "a/b = c/x",
+        "a - b = c - x",
+      ],
+      correctAnswer: 2,
+      explanation: "A fórmula básica é a/b = c/x, onde resolvemos para x usando: x = (c × b) / a",
+    },
+    {
+      question: "Qual é a diferença entre Regra de Três Direta e Inversa?",
+      options: [
+        "Na direta, os números aumentam; na inversa, diminuem",
+        "Na direta, duas grandezas aumentam juntas; na inversa, uma aumenta enquanto a outra diminui",
+        "Não há diferença, são nomes diferentes para a mesma coisa",
+        "A direta usa multiplicação e a inversa usa divisão",
+      ],
+      correctAnswer: 1,
+      explanation: "Na regra de três direta, quando uma grandeza aumenta, a outra também aumenta. Na inversa, quando uma aumenta, a outra diminui proporcionalmente.",
+    },
+    {
+      question: "Se 6 pessoas comem 12 pizzas, quantas pizzas 9 pessoas comerão?",
+      options: [
+        "15 pizzas",
+        "16 pizzas",
+        "18 pizzas",
+        "20 pizzas",
+      ],
+      correctAnswer: 2,
+      explanation: "6/12 = 9/x → 6x = 108 → x = 18. Portanto, 9 pessoas comerão 18 pizzas.",
+    },
+  ];
+
+  const calculateRegraTres = () => {
+    setCalcError("");
+    setX(null);
+
+    const aNum = parseFloat(a);
+    const bNum = parseFloat(b);
+    const cNum = parseFloat(c);
+
+    if (isNaN(aNum) || isNaN(bNum) || isNaN(cNum)) {
+      setCalcError("Por favor, preencha todos os campos com números válidos");
+      return;
+    }
+
+    if (bNum === 0) {
+      setCalcError("O valor B não pode ser zero");
+      return;
+    }
+
+    const result = (cNum * bNum) / aNum;
+    setX(Math.round(result * 100) / 100);
+  };
+
+  // Exercícios Direta
+  const handleDiretaSubmit = () => {
+    const userValue = parseFloat(diretaAnswer);
+    const correct = Math.abs(userValue - exercisesDireta[diretaIndex].correctAnswer) < 0.01;
+
+    setDiretaTotalAnswered(diretaTotalAnswered + 1);
+
+    if (correct) {
+      setDiretaScore(diretaScore + 1);
+      setDiretaFeedback({
+        type: "correct",
+        message: `✓ Correto! ${exercisesDireta[diretaIndex].explanation}`,
+      });
+    } else {
+      setDiretaFeedback({
+        type: "incorrect",
+        message: `✗ Incorreto. A resposta correta é ${exercisesDireta[diretaIndex].correctAnswer}. ${exercisesDireta[diretaIndex].explanation}`,
+      });
+    }
+  };
+
+  const nextDireta = () => {
+    if (diretaIndex < exercisesDireta.length - 1) {
+      setDiretaIndex(diretaIndex + 1);
+      setDiretaAnswer("");
+      setDiretaFeedback({ type: null, message: "" });
+    }
+  };
+
+  const resetDireta = () => {
+    setDiretaIndex(0);
+    setDiretaAnswer("");
+    setDiretaFeedback({ type: null, message: "" });
+    setDiretaScore(0);
+    setDiretaTotalAnswered(0);
+    setExerciseMode("menu");
+  };
+
+  // Exercícios Inversa
+  const handleInversaSubmit = () => {
+    const userValue = parseFloat(inversaAnswer);
+    const correct = Math.abs(userValue - exercisesInversa[inversaIndex].correctAnswer) < 0.01;
+
+    setInversaTotalAnswered(inversaTotalAnswered + 1);
+
+    if (correct) {
+      setInversaScore(inversaScore + 1);
+      setInversaFeedback({
+        type: "correct",
+        message: `✓ Correto! ${exercisesInversa[inversaIndex].explanation}`,
+      });
+    } else {
+      setInversaFeedback({
+        type: "incorrect",
+        message: `✗ Incorreto. A resposta correta é ${exercisesInversa[inversaIndex].correctAnswer}. ${exercisesInversa[inversaIndex].explanation}`,
+      });
+    }
+  };
+
+  const nextInversa = () => {
+    if (inversaIndex < exercisesInversa.length - 1) {
+      setInversaIndex(inversaIndex + 1);
+      setInversaAnswer("");
+      setInversaFeedback({ type: null, message: "" });
+    }
+  };
+
+  const resetInversa = () => {
+    setInversaIndex(0);
+    setInversaAnswer("");
+    setInversaFeedback({ type: null, message: "" });
+    setInversaScore(0);
+    setInversaTotalAnswered(0);
+    setExerciseMode("menu");
+  };
+
+  // Questionário
+  const handleQuizSubmit = () => {
+    if (selectedOption === null) return;
+
+    const correct = parseInt(selectedOption) === quizQuestions[quizIndex].correctAnswer;
+
+    setQuizTotalAnswered(quizTotalAnswered + 1);
+
+    if (correct) {
+      setQuizScore(quizScore + 1);
+      setQuizFeedback({
+        type: "correct",
+        message: `✓ Correto! ${quizQuestions[quizIndex].explanation}`,
+      });
+    } else {
+      setQuizFeedback({
+        type: "incorrect",
+        message: `✗ Incorreto. A resposta correta é: ${quizQuestions[quizIndex].options[quizQuestions[quizIndex].correctAnswer]}. ${quizQuestions[quizIndex].explanation}`,
+      });
+    }
+  };
+
+  const nextQuizQuestion = () => {
+    if (quizIndex < quizQuestions.length - 1) {
+      setQuizIndex(quizIndex + 1);
+      setSelectedOption(null);
+      setQuizFeedback({ type: null, message: "" });
+    }
+  };
+
+  const resetQuiz = () => {
+    setQuizIndex(0);
+    setSelectedOption(null);
+    setQuizFeedback({ type: null, message: "" });
+    setQuizScore(0);
+    setQuizTotalAnswered(0);
+    setExerciseMode("menu");
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="border-b border-gray-200 sticky top-0 bg-white z-50">
+        <div className="container py-4 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="text-gray-600 hover:text-blue-700"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Regra de Três</h1>
+        </div>
+      </nav>
+
+      <div className="container py-12">
+        {/* Hero Image */}
+        <div className="mb-12">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663043087508/KF2siGQNLE9BA6GWLQNiSE/hero-regra-tres-U8nuoiveZXNGgDfQ7LmsS4.webp"
+            alt="Regra de Três"
+            className="w-full h-auto rounded-lg shadow-lg max-h-96 object-cover"
+          />
+        </div>
+
+        <Tabs defaultValue="conceito" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="conceito">Conceito</TabsTrigger>
+            <TabsTrigger value="calculadora">Calculadora</TabsTrigger>
+            <TabsTrigger value="exercicios">Exercícios</TabsTrigger>
+          </TabsList>
+
+          {/* Conceito Tab */}
+          <TabsContent value="conceito" className="space-y-8">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-3xl">O que é Regra de Três?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-lg text-gray-700 leading-relaxed">
+                  A regra de três é um método matemático que permite encontrar um valor desconhecido quando temos três valores conhecidos de duas grandezas proporcionais.
+                </p>
+
+                <div className="bg-blue-50 border-l-4 border-blue-700 p-6 rounded">
+                  <h4 className="font-bold text-blue-900 mb-3">Fórmula Básica:</h4>
+                  <p className="text-blue-900 font-mono text-lg">a / b = c / x</p>
+                  <p className="text-blue-800 mt-3">Resolvendo para x: <span className="font-mono">x = (c × b) / a</span></p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-4 text-xl">Tipos de Regra de Três:</h4>
+                  <div className="space-y-4">
+                    <div className="border-l-4 border-emerald-600 pl-4">
+                      <h5 className="font-bold text-emerald-900 mb-2">Simples Direta</h5>
+                      <p className="text-gray-700">
+                        Quando duas grandezas aumentam ou diminuem na mesma proporção. Se uma aumenta, a outra também aumenta.
+                      </p>
+                      <p className="text-gray-600 mt-2 text-sm">
+                        Exemplo: Se 5 kg de arroz custam R$ 20, quanto custam 10 kg? (Mais arroz = Mais caro)
+                      </p>
+                    </div>
+
+                    <div className="border-l-4 border-amber-600 pl-4">
+                      <h5 className="font-bold text-amber-900 mb-2">Simples Inversa</h5>
+                      <p className="text-gray-700">
+                        Quando uma grandeza aumenta e a outra diminui na mesma proporção. Se uma aumenta, a outra diminui.
+                      </p>
+                      <p className="text-gray-600 mt-2 text-sm">
+                        Exemplo: Se 3 operários fazem um trabalho em 12 dias, quantos dias levarão 6 operários? (Mais operários = Menos dias)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-4 text-xl">Passo a Passo:</h4>
+                  <ol className="space-y-3 list-decimal list-inside text-gray-700">
+                    <li>Identifique as duas grandezas envolvidas</li>
+                    <li>Verifique se são diretamente ou inversamente proporcionais</li>
+                    <li>Monte a proporção com os valores conhecidos</li>
+                    <li>Aplique a fórmula para encontrar o valor desconhecido</li>
+                    <li>Verifique se o resultado faz sentido</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Calculadora Tab */}
+          <TabsContent value="calculadora" className="space-y-8">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-3xl">Calculadora de Regra de Três</CardTitle>
+                <CardDescription>
+                  Insira os valores conhecidos para encontrar o valor desconhecido
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="bg-gray-50 p-8 rounded-lg">
+                  <div className="grid md:grid-cols-3 gap-6 items-end mb-8">
+                    <div>
+                      <Label htmlFor="a" className="text-base font-semibold text-gray-900 mb-2 block">
+                        Valor A
+                      </Label>
+                      <Input
+                        id="a"
+                        type="number"
+                        placeholder="Ex: 5"
+                        value={a}
+                        onChange={(e) => setA(e.target.value)}
+                        className="text-lg h-12"
+                      />
+                    </div>
+
+                    <div className="text-center text-2xl font-bold text-gray-400">→</div>
+
+                    <div>
+                      <Label htmlFor="b" className="text-base font-semibold text-gray-900 mb-2 block">
+                        Valor B
+                      </Label>
+                      <Input
+                        id="b"
+                        type="number"
+                        placeholder="Ex: 20"
+                        value={b}
+                        onChange={(e) => setB(e.target.value)}
+                        className="text-lg h-12"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-6 items-end">
+                    <div>
+                      <Label htmlFor="c" className="text-base font-semibold text-gray-900 mb-2 block">
+                        Valor C
+                      </Label>
+                      <Input
+                        id="c"
+                        type="number"
+                        placeholder="Ex: 10"
+                        value={c}
+                        onChange={(e) => setC(e.target.value)}
+                        className="text-lg h-12"
+                      />
+                    </div>
+
+                    <div className="text-center text-2xl font-bold text-gray-400">→</div>
+
+                    <div>
+                      <Label htmlFor="x" className="text-base font-semibold text-gray-900 mb-2 block">
+                        Valor X (resultado)
+                      </Label>
+                      <Input
+                        id="x"
+                        type="number"
+                        placeholder="?"
+                        value={x !== null ? x : ""}
+                        disabled
+                        className="text-lg h-12 bg-blue-50 text-blue-900 font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {calcError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+                    {calcError}
+                  </div>
+                )}
+
+                <Button
+                  onClick={calculateRegraTres}
+                  className="w-full bg-blue-700 hover:bg-blue-800 text-white h-12 text-lg font-semibold"
+                >
+                  Calcular
+                </Button>
+
+                {x !== null && (
+                  <div className="bg-emerald-50 border-l-4 border-emerald-600 p-6 rounded">
+                    <div className="flex items-center gap-3 mb-3">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                      <h4 className="font-bold text-emerald-900 text-lg">Resultado</h4>
+                    </div>
+                    <p className="text-emerald-900 text-lg">
+                      X = <span className="font-mono font-bold text-2xl">{x}</span>
+                    </p>
+                    <p className="text-emerald-800 mt-3 text-sm">
+                      Fórmula: ({c} × {b}) / {a} = {x}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Exercícios Tab */}
+          <TabsContent value="exercicios" className="space-y-8">
+            {exerciseMode === "menu" ? (
+              <div className="grid md:grid-cols-3 gap-8">
+                <Card className="border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setExerciseMode("direta")}>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Regra de Três Direta</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base mb-6">
+                      Pratique problemas onde as duas grandezas aumentam ou diminuem juntas
+                    </CardDescription>
+                    <Button className="w-full bg-blue-700 hover:bg-blue-800 text-white h-12 font-semibold">
+                      Começar →
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setExerciseMode("inversa")}>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Regra de Três Inversa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base mb-6">
+                      Pratique problemas onde uma grandeza aumenta e a outra diminui
+                    </CardDescription>
+                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12 font-semibold">
+                      Começar →
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setExerciseMode("quiz")}>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Questionário</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base mb-6">
+                      Responda 5 perguntas de múltipla escolha sobre Regra de Três
+                    </CardDescription>
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold">
+                      Começar →
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : exerciseMode === "direta" ? (
+              // Exercícios Direta
+              <>
+                {diretaTotalAnswered === 0 ? (
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="text-3xl">Exercícios - Regra de Três Direta</CardTitle>
+                      <CardDescription>
+                        Nestes exercícios, quando uma grandeza aumenta, a outra também aumenta proporcionalmente.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-700">
+                        <p className="text-blue-900 font-semibold">💡 Dica:</p>
+                        <p className="text-blue-800 text-sm mt-2">
+                          Use a fórmula: a/b = c/x → x = (c × b) / a
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => setDiretaIndex(0)}
+                        className="w-full bg-blue-700 hover:bg-blue-800 text-white h-12 text-lg font-semibold"
+                      >
+                        Começar Exercícios
+                      </Button>
+                      <Button
+                        onClick={() => setExerciseMode("menu")}
+                        variant="outline"
+                        className="w-full h-12 text-lg font-semibold"
+                      >
+                        Voltar ao Menu
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Progress */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-gray-900">
+                          Exercício {diretaIndex + 1} de {exercisesDireta.length}
+                        </h4>
+                        <span className="text-sm font-semibold text-blue-700">
+                          Acertos: {diretaScore}/{diretaTotalAnswered}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-700 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${((diretaIndex + 1) / exercisesDireta.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Exercise Card */}
+                    <Card className="border-0 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="text-2xl">{exercisesDireta[diretaIndex].question}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-700">
+                          <p className="text-blue-900 font-mono text-lg">{exercisesDireta[diretaIndex].setup}</p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="direta-answer" className="text-base font-semibold text-gray-900 mb-2 block">
+                            Sua Resposta:
+                          </Label>
+                          <Input
+                            id="direta-answer"
+                            type="number"
+                            placeholder="Digite o valor de x"
+                            value={diretaAnswer}
+                            onChange={(e) => setDiretaAnswer(e.target.value)}
+                            className="text-lg h-12"
+                            disabled={diretaFeedback.type !== null}
+                          />
+                        </div>
+
+                        {diretaFeedback.type && (
+                          <div
+                            className={`p-6 rounded-lg border-l-4 flex gap-3 ${
+                              diretaFeedback.type === "correct"
+                                ? "bg-emerald-50 border-emerald-600"
+                                : "bg-red-50 border-red-600"
+                            }`}
+                          >
+                            {diretaFeedback.type === "correct" ? (
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
+                            ) : (
+                              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                            )}
+                            <p
+                              className={
+                                diretaFeedback.type === "correct"
+                                  ? "text-emerald-900"
+                                  : "text-red-900"
+                              }
+                            >
+                              {diretaFeedback.message}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          {diretaFeedback.type === null ? (
+                            <Button
+                              onClick={handleDiretaSubmit}
+                              className="flex-1 bg-blue-700 hover:bg-blue-800 text-white h-12 font-semibold"
+                            >
+                              Verificar Resposta
+                            </Button>
+                          ) : (
+                            <>
+                              {diretaIndex < exercisesDireta.length - 1 ? (
+                                <Button
+                                  onClick={nextDireta}
+                                  className="flex-1 bg-blue-700 hover:bg-blue-800 text-white h-12 font-semibold"
+                                >
+                                  Próximo Exercício
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={resetDireta}
+                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold"
+                                >
+                                  Refazer Exercícios
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </>
+            ) : exerciseMode === "inversa" ? (
+              // Exercícios Inversa
+              <>
+                {inversaTotalAnswered === 0 ? (
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="text-3xl">Exercícios - Regra de Três Inversa</CardTitle>
+                      <CardDescription>
+                        Nestes exercícios, quando uma grandeza aumenta, a outra diminui proporcionalmente.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-700">
+                        <p className="text-amber-900 font-semibold">💡 Dica:</p>
+                        <p className="text-amber-800 text-sm mt-2">
+                          Use a fórmula: a × b = c × x → x = (a × b) / c
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => setInversaIndex(0)}
+                        className="w-full bg-amber-600 hover:bg-amber-700 text-white h-12 text-lg font-semibold"
+                      >
+                        Começar Exercícios
+                      </Button>
+                      <Button
+                        onClick={() => setExerciseMode("menu")}
+                        variant="outline"
+                        className="w-full h-12 text-lg font-semibold"
+                      >
+                        Voltar ao Menu
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Progress */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-gray-900">
+                          Exercício {inversaIndex + 1} de {exercisesInversa.length}
+                        </h4>
+                        <span className="text-sm font-semibold text-amber-700">
+                          Acertos: {inversaScore}/{inversaTotalAnswered}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-amber-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${((inversaIndex + 1) / exercisesInversa.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Exercise Card */}
+                    <Card className="border-0 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="text-2xl">{exercisesInversa[inversaIndex].question}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="bg-amber-50 p-6 rounded-lg border-l-4 border-amber-700">
+                          <p className="text-amber-900 font-mono text-lg">{exercisesInversa[inversaIndex].setup}</p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="inversa-answer" className="text-base font-semibold text-gray-900 mb-2 block">
+                            Sua Resposta:
+                          </Label>
+                          <Input
+                            id="inversa-answer"
+                            type="number"
+                            placeholder="Digite o valor de x"
+                            value={inversaAnswer}
+                            onChange={(e) => setInversaAnswer(e.target.value)}
+                            className="text-lg h-12"
+                            disabled={inversaFeedback.type !== null}
+                          />
+                        </div>
+
+                        {inversaFeedback.type && (
+                          <div
+                            className={`p-6 rounded-lg border-l-4 flex gap-3 ${
+                              inversaFeedback.type === "correct"
+                                ? "bg-emerald-50 border-emerald-600"
+                                : "bg-red-50 border-red-600"
+                            }`}
+                          >
+                            {inversaFeedback.type === "correct" ? (
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
+                            ) : (
+                              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                            )}
+                            <p
+                              className={
+                                inversaFeedback.type === "correct"
+                                  ? "text-emerald-900"
+                                  : "text-red-900"
+                              }
+                            >
+                              {inversaFeedback.message}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          {inversaFeedback.type === null ? (
+                            <Button
+                              onClick={handleInversaSubmit}
+                              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white h-12 font-semibold"
+                            >
+                              Verificar Resposta
+                            </Button>
+                          ) : (
+                            <>
+                              {inversaIndex < exercisesInversa.length - 1 ? (
+                                <Button
+                                  onClick={nextInversa}
+                                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white h-12 font-semibold"
+                                >
+                                  Próximo Exercício
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={resetInversa}
+                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold"
+                                >
+                                  Refazer Exercícios
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </>
+            ) : (
+              // Questionário
+              <>
+                {quizTotalAnswered === 0 ? (
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="text-3xl">Questionário de Múltipla Escolha</CardTitle>
+                      <CardDescription>
+                        Teste seus conhecimentos com {quizQuestions.length} perguntas sobre Regra de Três
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Button
+                        onClick={() => setQuizIndex(0)}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 text-lg font-semibold"
+                      >
+                        Começar Questionário
+                      </Button>
+                      <Button
+                        onClick={() => setExerciseMode("menu")}
+                        variant="outline"
+                        className="w-full h-12 text-lg font-semibold"
+                      >
+                        Voltar ao Menu
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Progress */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-bold text-gray-900">
+                          Pergunta {quizIndex + 1} de {quizQuestions.length}
+                        </h4>
+                        <span className="text-sm font-semibold text-blue-700">
+                          Acertos: {quizScore}/{quizTotalAnswered}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-700 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${((quizIndex + 1) / quizQuestions.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quiz Card */}
+                    <Card className="border-0 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="text-2xl">{quizQuestions[quizIndex].question}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-3">
+                          {quizQuestions[quizIndex].options.map((option, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedOption(String(index))}
+                              disabled={quizFeedback.type !== null}
+                              className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                                selectedOption === String(index)
+                                  ? "border-blue-700 bg-blue-50"
+                                  : "border-gray-200 bg-white hover:border-blue-400"
+                              } ${quizFeedback.type !== null ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                    selectedOption === String(index)
+                                      ? "border-blue-700 bg-blue-700"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {selectedOption === String(index) && (
+                                    <div className="w-2 h-2 bg-white rounded-full" />
+                                  )}
+                                </div>
+                                <span className="text-gray-900 font-medium">{option}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+
+                        {quizFeedback.type && (
+                          <div
+                            className={`p-6 rounded-lg border-l-4 flex gap-3 ${
+                              quizFeedback.type === "correct"
+                                ? "bg-emerald-50 border-emerald-600"
+                                : "bg-red-50 border-red-600"
+                            }`}
+                          >
+                            {quizFeedback.type === "correct" ? (
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-1" />
+                            ) : (
+                              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                            )}
+                            <p
+                              className={
+                                quizFeedback.type === "correct"
+                                  ? "text-emerald-900"
+                                  : "text-red-900"
+                              }
+                            >
+                              {quizFeedback.message}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          {quizFeedback.type === null ? (
+                            <Button
+                              onClick={handleQuizSubmit}
+                              disabled={selectedOption === null}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Verificar Resposta
+                            </Button>
+                          ) : (
+                            <>
+                              {quizIndex < quizQuestions.length - 1 ? (
+                                <Button
+                                  onClick={nextQuizQuestion}
+                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold"
+                                >
+                                  Próxima Pergunta
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={resetQuiz}
+                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-semibold"
+                                >
+                                  Refazer Questionário
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+
+
+
